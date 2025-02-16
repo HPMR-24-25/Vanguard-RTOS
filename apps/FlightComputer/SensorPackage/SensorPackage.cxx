@@ -176,7 +176,7 @@ static int lsmTask(int argc, char *argv[]) {
 
     mq_close(mqd);
     mq_unlink("/lsmQueue");
-
+xw
     return EXIT_SUCCESS;
 }
 
