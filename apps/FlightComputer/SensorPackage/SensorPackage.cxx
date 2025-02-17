@@ -35,50 +35,6 @@ static int initSensorBus() {
     return ret;
 }
 
-//static int adxlTask(int argc, char *argv[]) {
-//    ADXL375 adxl = ADXL375();
-//
-//    adxl.init(i2cBus);
-//
-//    // Message queue setup
-//    struct mq_attr attr = {
-//            .mq_maxmsg = 1,
-//            .mq_msgsize = sizeof(adxl375_data_t),
-//            .mq_flags = 0
-//    };
-//
-//    mqd_t mqd = mq_open("/ADXL375_queue", O_CREAT | O_WRONLY, 0644, &attr);
-//    if (mqd == (mqd_t)-1) {
-//        printf("[ADXL375]: Error: Failed to create message queue.\n");
-//        return EXIT_FAILURE;
-//    }
-//
-//    // Main loop
-//    adxl375_data_t adxlData;
-//    struct timespec sleep_time = {
-//            .tv_sec = 0,
-//            .tv_nsec = (1000000000 / 400) // Example polling rate: 100 Hz
-//    };
-//
-//    while (true) {
-//        // Read accelerometer data
-////        read(&adxlData.accel_x, &adxlData.accel_y, &adxlData.accel_z);
-//
-//        // Send data to the message queue
-//        if (mq_send(mqd, (const char *)&adxlData, sizeof(adxlData), 0) == -1) {
-//            printf("[ADXL375]: Error: Failed to send data to the queue.\n");
-//        }
-//
-//        // Sleep for the polling interval
-//        nanosleep(&sleep_time, nullptr);
-//    }
-//
-//    // Clean up (unreachable in this example)
-//    mq_close(mqd);
-//    return EXIT_SUCCESS;
-//}
-
-
 static int gpsTask(int argc, char *argv[]) {
     printf("[GPS] Spawning GPS process...\n");
 
@@ -139,7 +95,7 @@ static int lsmTask(int argc, char *argv[]) {
 
     mq_attr attr = {
             .mq_maxmsg = 1,
-            .mq_msgsize = sizeof(gps_data_t),
+            .mq_msgsize = sizeof(lsm_data_t),
             .mq_flags = 0
     };
 
@@ -155,6 +111,9 @@ static int lsmTask(int argc, char *argv[]) {
     lsm303.setAccelMode(LSM303_MODE_A::MODE_HIGH_RES);
     lsm303.setAccelRange(LSM303_RANGE_A::RANGE_8G);
 
+    lsm303.setMagMode(LSM303_MODE_M::MODE_CONTINUOUS);
+    lsm303.setMagODR(LSM303_ODR_M::HZ_100);
+
     lsm303.init(i2cBus);
 
     lsm_data_t lsmData{};
@@ -169,13 +128,16 @@ static int lsmTask(int argc, char *argv[]) {
 
 //        printf("%f, %f, %f, %lu\n", lsmData.accel_x, lsmData.accel_y, lsmData.accel_z, timestamp);
 
-//        mq_send(mqd, (const char*)&lsmData, sizeof(lsmData), 0);
+        if(mq_send(mqd, (const char*)&lsmData, sizeof(lsmData), 0) == -1) {
+            printf("[IMU_1] Error: Could not send message...\n");
+        }
+
         nanosleep(&sleep_time, nullptr);
     }
 
     mq_close(mqd);
     mq_unlink("/lsmQueue");
-xw
+
     return EXIT_SUCCESS;
 }
 
@@ -184,7 +146,7 @@ static int lpsTask(int argc, char *argv[]) {
 
     mq_attr attr = {
             .mq_maxmsg = 1,
-            .mq_msgsize = sizeof(gps_data_t),
+            .mq_msgsize = sizeof(lps_data_t),
             .mq_flags = 0
     };
 
@@ -219,9 +181,7 @@ static int lpsTask(int argc, char *argv[]) {
         lpsData.temperature = barometer.getTemperature();
         lpsData.altitude = barometer.getAltitude();
 
-        printf("%f, %f, %hu, %lu\n", lpsData.pressure, lpsData.altitude, lpsData.temperature, timestamp);
-
-//        mq_send(mqd, (const char*)&lsmData, sizeof(lsmData), 0);
+        mq_send(mqd, (const char*)&lpsData, sizeof(lpsData), 0);
         nanosleep(&sleep_time, nullptr);
     }
 

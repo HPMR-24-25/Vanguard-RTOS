@@ -4,7 +4,7 @@
 
 clear variables; close all; clc;
 
-rawLPS22 = readtable('./data/LPS22/LPS22_2330_15_2_2025.csv');
+rawLPS22 = readtable('./data/DataLog_0045_17_2_2025.csv');
 
 % Extract Timestamp
 time = rawLPS22.timestamp / 1000;
@@ -12,7 +12,6 @@ time = rawLPS22.timestamp / 1000;
 % Sensor Readings
 pressure = rawLPS22.pressure; % [hPa] Pressure
 altitude = rawLPS22.altitude; % [m] Altitude
-temperature = rawLPS22.temperature; % [C] Temperature
 
 %% Plot Readings
 figure('Name', 'Altitude');

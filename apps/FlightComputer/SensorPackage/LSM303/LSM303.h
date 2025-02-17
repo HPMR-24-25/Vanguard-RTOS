@@ -33,6 +33,10 @@ public:
 
     void setAccelRange(LSM303_RANGE_A range);
 
+    void setMagODR(LSM303_ODR_M odr);
+
+    void setMagMode(LSM303_MODE_M mode);
+
 private:
     int busWrite(uint8_t reg, uint8_t val, char sensorSelect);
 
@@ -54,15 +58,20 @@ private:
 
     int readAccelerometer(int16_t &x, int16_t &y, int16_t &z);
 
-    int readMagnetometer();
+    int readMagnetometer(int16_t &x, int16_t &y, int16_t &z);
 
     // Sensor Configurations
     LSM303_ODR_A _odr_a;
     LSM303_MODE_A _mode_a;
     LSM303_RANGE_A _range_a;
 
-    // Shift and LSB
+    LSM303_ODR_M _odr_m;
+    LSM303_MODE_M _mode_m;
 
+    // Shift and LSB
     void getLsbShift(uint8_t &shift, float &lsb);
+
+    // Magnetometer Sensitivity
+    constexpr static float scaleFactor_m = 1.5f;
 
 };

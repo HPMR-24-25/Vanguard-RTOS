@@ -3,6 +3,7 @@
 constexpr static uint8_t LSM303_ADDR_A = 0x19; // I2C Address
 constexpr static uint8_t LSM303_ADDR_M = 0x1E;
 
+/* +== Accelerometer Registers ==+ */
 constexpr static uint8_t CTRL_REG1_A = 0x20;
 constexpr static uint8_t CTRL_REG2_A = 0x21;
 constexpr static uint8_t CTRL_REG3_A = 0x22;
@@ -42,24 +43,34 @@ constexpr static uint8_t TIME_LIMIT_A = 0x3B;
 constexpr static uint8_t TIME_LATENCY_A = 0x3C;
 constexpr static uint8_t TIME_WINDOW_A = 0x3D;
 
-constexpr static uint8_t CRA_REG_M = 0x00;
-constexpr static uint8_t CRB_REG_M = 0x01;
+/* +== Magnetometer Registers ==+ */
+constexpr static uint8_t OFFSET_X_REG_L_M = 0x45;
+constexpr static uint8_t OFFSET_X_REG_H_M = 0x46;
 
-constexpr static uint8_t MR_REG_M = 0x02;
+constexpr static uint8_t OFFSET_Y_REG_L_M = 0x47;
+constexpr static uint8_t OFFSET_Y_REG_H_M = 0x48;
 
-constexpr static uint8_t OUT_X_H_M = 0x03;
-constexpr static uint8_t OUT_X_L_M = 0x04;
+constexpr static uint8_t OFFSET_Z_REG_L_M = 0x49;
+constexpr static uint8_t OFFSET_Z_REG_H_M = 0x4A;
 
-constexpr static uint8_t OUT_Z_H_M = 0x05;
-constexpr static uint8_t OUT_Z_L_M = 0x06;
+constexpr static uint8_t WHO_AM_I_M = 0x4F;
 
-constexpr static uint8_t OUT_Y_H_M = 0x07;
-constexpr static uint8_t OUT_Y_L_M = 0x08;
+constexpr static uint8_t CFG_REG_A_M = 0x60;
+constexpr static uint8_t CFG_REG_B_M = 0x61;
+constexpr static uint8_t CFG_REG_C_M = 0x62;
 
-constexpr static uint8_t SR_REG_M = 0x09;
-constexpr static uint8_t IRA_REG_M = 0x0A;
-constexpr static uint8_t IRB_REG_M = 0x0B;
-constexpr static uint8_t IRC_REG_M = 0x0C;
+constexpr static uint8_t INT_CTRL_REG_M = 0x63;
+constexpr static uint8_t INT_SOURCE_REG_M = 0x64;
+constexpr static uint8_t INT_THS_L_REG_M = 0x65;
+constexpr static uint8_t INT_THS_H_REG_M = 0x66;
 
-constexpr static uint8_t TEMP_OUT_H_M = 0x31;
-constexpr static uint8_t TEMP_OUT_L_M = 0x32;
+constexpr static uint8_t STATUS_REG_M = 0x67;
+
+constexpr static uint8_t OUTX_L_REG_M = 0x68;
+constexpr static uint8_t OUTX_H_REG_M = 0x69;
+
+constexpr static uint8_t OUTY_L_REG_M = 0x6A;
+constexpr static uint8_t OUTY_H_REG_M = 0x6B;
+
+constexpr static uint8_t OUTZ_L_REG_M = 0x6C;
+constexpr static uint8_t OUTZ_H_REG_M = 0x6D;

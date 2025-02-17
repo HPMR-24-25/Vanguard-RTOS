@@ -1,17 +1,14 @@
 #include <nuttx/config.h>
 #include <nuttx/init.h>
-#include "stdio.h"
+#include <cstdio>
 #include <mqueue.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include "stdlib.h"
+#include <cstdlib>
 #include <unistd.h>
-// #include "../FlightLib/FlightConfig.h"
-// #include "../FlightLib/SensorData.h"
+
 #include "../FlightLib/SensorData.h"
 #include "../FlightLib/FlightConfig.h"
-
-
 
 static int stateMachineTask(int argc, char *argv[]) {
 
@@ -19,11 +16,18 @@ static int stateMachineTask(int argc, char *argv[]) {
 
     mqd_t lsmQueue = mq_open("/lsmQueue", O_RDONLY | O_NONBLOCK);
     if(lsmQueue == (mqd_t)-1) {
-//        printf("[State Machine] Error: Unable to open LSM queue...\n");
-//        return EXIT_FAILURE;
+        printf("[State Machine] Error: Unable to open LSM queue...\n");
+        return EXIT_FAILURE;
     }
 
     lsm_data_t lsmData{};
+
+    mqd_t lpsQueue = mq_open("/lpsQueue", O_RDONLY | O_NONBLOCK);
+    if(lpsQueue == (mqd_t)-1) {
+        printf("[State Machine] Error: Unable to open LPS queue...\n");
+        return EXIT_FAILURE;
+    }
+    lps_data_t lpsData{};
 
     // Open IMU queue
 //    mqd_t imuQueue = mq_open("/imuQueue", O_RDONLY | O_NONBLOCK);
@@ -53,11 +57,6 @@ static int stateMachineTask(int argc, char *argv[]) {
 //        return EXIT_FAILURE;
 //    }
 
-    // Allocate memory for data storage
-//    imu_data_t imuData{};
-//    mag_data_t magData{};
-//    gps_data_t gpsData{};
-//    baro_data_t baroData{};
     struct timespec ts{};
 
     while(1) {
@@ -73,7 +72,14 @@ static int stateMachineTask(int argc, char *argv[]) {
             }
         }
 
-        printf("%f, %f, %f", lsmData.accel_x, lsmData.accel_y, lsmData.accel_z);
+        if(mq_receive(lpsQueue, (char *)&lpsData, sizeof(lps_data_t), nullptr) == -1) {
+            if(errno != EAGAIN) {
+                printf("[State Machine] Error: Not receiving LPS22 data...\n");
+            }
+        }
+
+        // Accel XYZ, Mag XYZ, Baro Pressure, Baro Altitude
+        printf("%f, %f, %f, %f, %f, %f, %f, %f, %lu\n", lsmData.accel_x, lsmData.accel_y, lsmData.accel_z, lsmData.mag_x, lsmData.mag_y, lsmData.mag_z, lpsData.pressure, lpsData.altitude, timestamp);
 
 //        if(mq_receive(imuQueue, (char *)&imuData, sizeof(imu_data_t), nullptr) == -1) {
 //            if (errno != EAGAIN) {

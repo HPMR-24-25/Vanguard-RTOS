@@ -23,3 +23,16 @@ enum class LSM303_RANGE_A : uint8_t {
     RANGE_8G  = 0b10,
     RANGE_16G = 0b11
 };
+
+enum class LSM303_ODR_M : uint8_t {
+    HZ_10  = 0b00,
+    HZ_20  = 0b01,
+    HZ_50  = 0b10,
+    HZ_100 = 0b11
+};
+
+enum class LSM303_MODE_M : uint8_t {
+    MODE_CONTINUOUS = 0b00,
+    MODE_SINGLE     = 0b01,
+    MODE_IDLE       = 0b11
+};
