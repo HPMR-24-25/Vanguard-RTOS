@@ -55,5 +55,5 @@ typedef struct {
 typedef struct {
     float pressure; // [hPa]
     float altitude; // [m]
-    uint16_t temperature; // [C]
+    float temperature; // [C]
 } lps_data_t;

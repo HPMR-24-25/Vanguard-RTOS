@@ -29,7 +29,7 @@ public:
 
     float getAltitude();
 
-    uint16_t getTemperature();
+    float getTemperature();
 private:
 
     int16_t busWrite(uint8_t reg, uint8_t val);
@@ -37,7 +37,7 @@ private:
     int16_t busRead(uint8_t reg, uint8_t *val, int8_t len);
 
     float _pressure = 0.0f;
-    uint16_t _temperature = 0;
+    float _temperature = 0;
 
     float _altitude = 0.0f;
 

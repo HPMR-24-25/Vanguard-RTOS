@@ -79,7 +79,7 @@ static int stateMachineTask(int argc, char *argv[]) {
         }
 
         // Accel XYZ, Mag XYZ, Baro Pressure, Baro Altitude
-        printf("%f, %f, %f, %f, %f, %f, %f, %f, %lu\n", lsmData.accel_x, lsmData.accel_y, lsmData.accel_z, lsmData.mag_x, lsmData.mag_y, lsmData.mag_z, lpsData.pressure, lpsData.altitude, timestamp);
+        printf("%f, %f, %f, %f, %f, %f, %f, %f, %f, %lu\n", lsmData.accel_x, lsmData.accel_y, lsmData.accel_z, lsmData.mag_x, lsmData.mag_y, lsmData.mag_z, lpsData.pressure, lpsData.temperature, lpsData.altitude, timestamp);
 
 //        if(mq_receive(imuQueue, (char *)&imuData, sizeof(imu_data_t), nullptr) == -1) {
 //            if (errno != EAGAIN) {

@@ -49,7 +49,7 @@ legend()
 % Root Mean Squared Error (RMS)
 RMS_accel_X = std(accelX); % [mg]
 RMS_accel_Y = std(accelY); % [mg]
-RMS_accel_Z = std(accelZ); % [mg]
+RMS_accel_Z = std(accelZ); % [mg] 
 
 RMS_mag_X = std(magX);
 RMS_mag_Y = std(magY);

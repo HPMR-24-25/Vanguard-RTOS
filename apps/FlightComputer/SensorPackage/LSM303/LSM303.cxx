@@ -93,7 +93,8 @@ bool LSM303::init(int i2cBus) {
     uint8_t ODR_MAG = static_cast<uint8_t>(_odr_m);
     uint8_t MODE_MAG = static_cast<uint8_t>(_mode_m);
 
-    uint8_t cfg_reg_a = (COMP_TEMP_EN << 7) | (REBOOT << 6) | (SOFT_RST << 5) | (LP << 4) | (ODR_MAG << 2) | MODE_MAG;
+//    uint8_t cfg_reg_a = (COMP_TEMP_EN << 7) | (REBOOT << 6) | (SOFT_RST << 5) | (LP << 4) | (ODR_MAG << 2) | MODE_MAG;
+    uint8_t cfg_reg_a = 0x00;
 
     busWrite(CFG_REG_A_M, cfg_reg_a, 'm');
 
@@ -116,7 +117,8 @@ bool LSM303::init(int i2cBus) {
     uint8_t SELF_TEST_M = 0b0;
     uint8_t INT_MAG = 0b0; // Disable Interrupt
 
-    uint8_t cfg_reg_c = (INT_MAG_PIN << 6) | (I2C_DIS << 5) | (BDU_M << 4) | (BLE_M << 3) | (SELF_TEST_M << 1) | INT_MAG;
+//    uint8_t cfg_reg_c = (INT_MAG_PIN << 6) | (I2C_DIS << 5) | (BDU_M << 4) | (BLE_M << 3) | (SELF_TEST_M << 1) | INT_MAG;
+    uint8_t cfg_reg_c = 0x01;
 
     busWrite(CFG_REG_C_M, cfg_reg_c, 'm');
 

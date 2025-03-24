@@ -1,5 +1,7 @@
 /****************************************************************************
- * boards/arm/stm32h7/nucleo-h743zi2/src/stm32_gpio.c
+ * boards/arm/stm32h7/nucleo-h745zi/src/stm32_gpio.c
+ *
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -36,9 +38,19 @@
 
 #include "chip.h"
 #include "stm32_gpio.h"
-#include "vanguard-stm32h7.h.old"
+#include "vanguard-stm32h7.h"
 
-#if defined(CONFIG_DEV_GPIO) && !defined(CONFIG_GPIO_LOWER_HALF)
+#define BOARD_NGPIOOUT 1
+#define BOARD_NGPIOIN  4
+#define BOARD_NGPIOINT 1
+
+/* Define GPIO pins */
+#define GPIO_CHARGE1 (GPIO_INPUT | GPIO_PULLUP | GPIO_PORTA | GPIO_PIN2)
+#define GPIO_IN1     (GPIO_INPUT | GPIO_PULLUP | GPIO_PORTA | GPIO_PIN3)
+#define GPIO_IN2     (GPIO_INPUT | GPIO_PULLUP | GPIO_PORTA | GPIO_PIN4)
+#define GPIO_IN3     (GPIO_INPUT | GPIO_PULLUP | GPIO_PORTA | GPIO_PIN5)
+#define GPIO_IN4     (GPIO_INPUT | GPIO_PULLUP | GPIO_PORTA | GPIO_PIN6)
+#define GPIO_INT1    (GPIO_INPUT | GPIO_PULLUP | GPIO_PORTA | GPIO_PIN7)
 
 /****************************************************************************
  * Private Types
@@ -46,14 +58,14 @@
 
 struct stm32gpio_dev_s
 {
-  struct gpio_dev_s gpio;
-  uint8_t id;
+    struct gpio_dev_s gpio;
+    uint8_t id;
 };
 
 struct stm32gpint_dev_s
 {
-  struct stm32gpio_dev_s stm32gpio;
-  pin_interrupt_t callback;
+    struct stm32gpio_dev_s stm32gpio;
+    pin_interrupt_t callback;
 };
 
 /****************************************************************************
@@ -64,8 +76,7 @@ static int gpin_read(struct gpio_dev_s *dev, bool *value);
 static int gpout_read(struct gpio_dev_s *dev, bool *value);
 static int gpout_write(struct gpio_dev_s *dev, bool value);
 static int gpint_read(struct gpio_dev_s *dev, bool *value);
-static int gpint_attach(struct gpio_dev_s *dev,
-                        pin_interrupt_t callback);
+static int gpint_attach(struct gpio_dev_s *dev, pin_interrupt_t callback);
 static int gpint_enable(struct gpio_dev_s *dev, bool enable);
 
 /****************************************************************************
@@ -73,68 +84,58 @@ static int gpint_enable(struct gpio_dev_s *dev, bool enable);
  ****************************************************************************/
 
 static const struct gpio_operations_s gpin_ops =
-{
-  .go_read   = gpin_read,
-  .go_write  = NULL,
-  .go_attach = NULL,
-  .go_enable = NULL,
-};
+        {
+                .go_read   = gpin_read,
+                .go_write  = NULL,
+                .go_attach = NULL,
+                .go_enable = NULL,
+        };
 
 static const struct gpio_operations_s gpout_ops =
-{
-  .go_read   = gpout_read,
-  .go_write  = gpout_write,
-  .go_attach = NULL,
-  .go_enable = NULL,
-};
+        {
+                .go_read   = gpout_read,
+                .go_write  = gpout_write,
+                .go_attach = NULL,
+                .go_enable = NULL,
+        };
 
 static const struct gpio_operations_s gpint_ops =
-{
-  .go_read   = gpint_read,
-  .go_write  = NULL,
-  .go_attach = gpint_attach,
-  .go_enable = gpint_enable,
-};
+        {
+                .go_read   = gpint_read,
+                .go_write  = NULL,
+                .go_attach = gpint_attach,
+                .go_enable = gpint_enable,
+        };
 
-#if BOARD_NGPIOIN > 0
+#if defined(BOARD_NGPIOIN) && BOARD_NGPIOIN > 0
 /* This array maps the GPIO pins used as INPUT */
-
 static const uint32_t g_gpioinputs[BOARD_NGPIOIN] =
-{
-  GPIO_IN1,
-  GPIO_IN2,
-  GPIO_IN3,
-  GPIO_IN4,
-};
+        {
+                GPIO_IN1,
+                GPIO_IN2,
+                GPIO_IN3,
+                GPIO_IN4,
+        };
 
 static struct stm32gpio_dev_s g_gpin[BOARD_NGPIOIN];
 #endif
 
-#if BOARD_NGPIOOUT
+#if defined(BOARD_NGPIOOUT) && BOARD_NGPIOOUT > 0
 /* This array maps the GPIO pins used as OUTPUT */
-
 static const uint32_t g_gpiooutputs[BOARD_NGPIOOUT] =
-{
-  GPIO_LD1,
-  GPIO_LD2,
-  GPIO_LD3,
-  GPIO_OUT1,
-  GPIO_OUT2,
-  GPIO_OUT3,
-  GPIO_OUT4,
-  GPIO_OUT5,
-};
+        {
+                GPIO_CHARGE1
+        };
 
 static struct stm32gpio_dev_s g_gpout[BOARD_NGPIOOUT];
 #endif
 
-#if BOARD_NGPIOINT > 0
+#if defined(BOARD_NGPIOINT) && BOARD_NGPIOINT > 0
 /* This array maps the GPIO pins used as INTERRUPT INPUTS */
-
 static const uint32_t g_gpiointinputs[BOARD_NGPIOINT] =
-{
-  GPIO_INT1,
-};
+        {
+                GPIO_INT1,
+        };
 
 static struct stm32gpint_dev_s g_gpint[BOARD_NGPIOINT];
 #endif
@@ -145,113 +146,102 @@ static struct stm32gpint_dev_s g_gpint[BOARD_NGPIOINT];
 
 static int stm32gpio_interrupt(int irq, void *context, void *arg)
 {
-  struct stm32gpint_dev_s *stm32gpint =
-    (struct stm32gpint_dev_s *)arg;
+    struct stm32gpint_dev_s *stm32gpint = (struct stm32gpint_dev_s *)arg;
 
-  DEBUGASSERT(stm32gpint != NULL && stm32gpint->callback != NULL);
-  gpioinfo("Interrupt! callback=%p\n", stm32gpint->callback);
+    DEBUGASSERT(stm32gpint != NULL && stm32gpint->callback != NULL);
+    gpioinfo("Interrupt! callback=%p\n", stm32gpint->callback);
 
-  stm32gpint->callback(&stm32gpint->stm32gpio.gpio,
-                       stm32gpint->stm32gpio.id);
-  return OK;
+    stm32gpint->callback(&stm32gpint->stm32gpio.gpio, stm32gpint->stm32gpio.id);
+    return OK;
 }
 
 static int gpin_read(struct gpio_dev_s *dev, bool *value)
 {
-  struct stm32gpio_dev_s *stm32gpio =
-    (struct stm32gpio_dev_s *)dev;
+    struct stm32gpio_dev_s *stm32gpio = (struct stm32gpio_dev_s *)dev;
 
-  DEBUGASSERT(stm32gpio != NULL && value != NULL);
-  DEBUGASSERT(stm32gpio->id < BOARD_NGPIOIN);
-  gpioinfo("Reading...\n");
+    DEBUGASSERT(stm32gpio != NULL && value != NULL);
+    DEBUGASSERT(stm32gpio->id < BOARD_NGPIOIN);
+    gpioinfo("Reading...\n");
 
-  *value = stm32_gpioread(g_gpioinputs[stm32gpio->id]);
-  return OK;
+    *value = stm32_gpioread(g_gpioinputs[stm32gpio->id]);
+    return OK;
 }
 
 static int gpout_read(struct gpio_dev_s *dev, bool *value)
 {
-  struct stm32gpio_dev_s *stm32gpio =
-    (struct stm32gpio_dev_s *)dev;
+    struct stm32gpio_dev_s *stm32gpio = (struct stm32gpio_dev_s *)dev;
 
-  DEBUGASSERT(stm32gpio != NULL && value != NULL);
-  DEBUGASSERT(stm32gpio->id < BOARD_NGPIOOUT);
-  gpioinfo("Reading...\n");
+    DEBUGASSERT(stm32gpio != NULL && value != NULL);
+    DEBUGASSERT(stm32gpio->id < BOARD_NGPIOOUT);
+    gpioinfo("Reading...\n");
 
-  *value = stm32_gpioread(g_gpiooutputs[stm32gpio->id]);
-  return OK;
+    *value = stm32_gpioread(g_gpiooutputs[stm32gpio->id]);
+    return OK;
 }
 
 static int gpout_write(struct gpio_dev_s *dev, bool value)
 {
-  struct stm32gpio_dev_s *stm32gpio =
-    (struct stm32gpio_dev_s *)dev;
+    struct stm32gpio_dev_s *stm32gpio = (struct stm32gpio_dev_s *)dev;
 
-  DEBUGASSERT(stm32gpio != NULL);
-  DEBUGASSERT(stm32gpio->id < BOARD_NGPIOOUT);
-  gpioinfo("Writing %d\n", (int)value);
+    DEBUGASSERT(stm32gpio != NULL);
+    DEBUGASSERT(stm32gpio->id < BOARD_NGPIOOUT);
+    gpioinfo("Writing %d\n", (int)value);
 
-  stm32_gpiowrite(g_gpiooutputs[stm32gpio->id], value);
-  return OK;
+    stm32_gpiowrite(g_gpiooutputs[stm32gpio->id], value);
+    return OK;
 }
 
 static int gpint_read(struct gpio_dev_s *dev, bool *value)
 {
-  struct stm32gpint_dev_s *stm32gpint =
-    (struct stm32gpint_dev_s *)dev;
+    struct stm32gpint_dev_s *stm32gpint = (struct stm32gpint_dev_s *)dev;
 
-  DEBUGASSERT(stm32gpint != NULL && value != NULL);
-  DEBUGASSERT(stm32gpint->stm32gpio.id < BOARD_NGPIOINT);
-  gpioinfo("Reading int pin...\n");
+    DEBUGASSERT(stm32gpint != NULL && value != NULL);
+    DEBUGASSERT(stm32gpint->stm32gpio.id < BOARD_NGPIOINT);
+    gpioinfo("Reading int pin...\n");
 
-  *value = stm32_gpioread(g_gpiointinputs[stm32gpint->stm32gpio.id]);
-  return OK;
+    *value = stm32_gpioread(g_gpiointinputs[stm32gpint->stm32gpio.id]);
+    return OK;
 }
 
-static int gpint_attach(struct gpio_dev_s *dev,
-                        pin_interrupt_t callback)
+static int gpint_attach(struct gpio_dev_s *dev, pin_interrupt_t callback)
 {
-  struct stm32gpint_dev_s *stm32gpint =
-    (struct stm32gpint_dev_s *)dev;
+    struct stm32gpint_dev_s *stm32gpint = (struct stm32gpint_dev_s *)dev;
 
-  gpioinfo("Attaching the callback\n");
+    gpioinfo("Attaching the callback\n");
 
-  /* Make sure the interrupt is disabled */
+    /* Make sure the interrupt is disabled */
+    stm32_gpiosetevent(g_gpiointinputs[stm32gpint->stm32gpio.id], false,
+                       false, false, NULL, NULL);
 
-  stm32_gpiosetevent(g_gpiointinputs[stm32gpint->stm32gpio.id], false,
-                     false, false, NULL, NULL);
-
-  gpioinfo("Attach %p\n", callback);
-  stm32gpint->callback = callback;
-  return OK;
+    gpioinfo("Attach %p\n", callback);
+    stm32gpint->callback = callback;
+    return OK;
 }
 
 static int gpint_enable(struct gpio_dev_s *dev, bool enable)
 {
-  struct stm32gpint_dev_s *stm32gpint =
-    (struct stm32gpint_dev_s *)dev;
+    struct stm32gpint_dev_s *stm32gpint = (struct stm32gpint_dev_s *)dev;
 
-  if (enable)
+    if (enable)
     {
-      if (stm32gpint->callback != NULL)
+        if (stm32gpint->callback != NULL)
         {
-          gpioinfo("Enabling the interrupt\n");
+            gpioinfo("Enabling the interrupt\n");
 
-          /* Configure the interrupt for rising edge */
-
-          stm32_gpiosetevent(g_gpiointinputs[stm32gpint->stm32gpio.id],
-                             true, false, false, stm32gpio_interrupt,
-                             &g_gpint[stm32gpint->stm32gpio.id]);
+            /* Configure the interrupt for rising edge */
+            stm32_gpiosetevent(g_gpiointinputs[stm32gpint->stm32gpio.id],
+                               true, false, false, stm32gpio_interrupt,
+                               &g_gpint[stm32gpint->stm32gpio.id]);
         }
     }
-  else
+    else
     {
-      gpioinfo("Disable the interrupt\n");
-      stm32_gpiosetevent(g_gpiointinputs[stm32gpint->stm32gpio.id],
-                         false, false, false, NULL, NULL);
+        gpioinfo("Disable the interrupt\n");
+        stm32_gpiosetevent(g_gpiointinputs[stm32gpint->stm32gpio.id],
+                           false, false, false, NULL, NULL);
     }
 
-  return OK;
+    return OK;
 }
 
 /****************************************************************************
@@ -268,64 +258,56 @@ static int gpint_enable(struct gpio_dev_s *dev, bool enable)
 
 int stm32_gpio_initialize(void)
 {
-  int i;
-  int pincount = 0;
+    int i;
+    int pincount = 0;
 
-#if BOARD_NGPIOIN > 0
-  for (i = 0; i < BOARD_NGPIOIN; i++)
+#if defined(BOARD_NGPIOIN) && BOARD_NGPIOIN > 0
+    for (i = 0; i < BOARD_NGPIOIN; i++)
     {
-      /* Setup and register the GPIO pin */
+        /* Setup and register the GPIO pin */
+        g_gpin[i].gpio.gp_pintype = GPIO_INPUT_PIN;
+        g_gpin[i].gpio.gp_ops     = &gpin_ops;
+        g_gpin[i].id              = i;
+        gpio_pin_register(&g_gpin[i].gpio, pincount);
 
-      g_gpin[i].gpio.gp_pintype = GPIO_INPUT_PIN;
-      g_gpin[i].gpio.gp_ops     = &gpin_ops;
-      g_gpin[i].id              = i;
-      gpio_pin_register(&g_gpin[i].gpio, pincount);
+        /* Configure the pin that will be used as input */
+        stm32_configgpio(g_gpioinputs[i]);
 
-      /* Configure the pin that will be used as input */
-
-      stm32_configgpio(g_gpioinputs[i]);
-
-      pincount++;
+        pincount++;
     }
 #endif
 
-#if BOARD_NGPIOOUT > 0
-  for (i = 0; i < BOARD_NGPIOOUT; i++)
+#if defined(BOARD_NGPIOOUT) && BOARD_NGPIOOUT > 0
+    for (i = 0; i < BOARD_NGPIOOUT; i++)
     {
-      /* Setup and register the GPIO pin */
+        /* Setup and register the GPIO pin */
+        g_gpout[i].gpio.gp_pintype = GPIO_OUTPUT_PIN;
+        g_gpout[i].gpio.gp_ops     = &gpout_ops;
+        g_gpout[i].id              = i;
+        gpio_pin_register(&g_gpout[i].gpio, pincount);
 
-      g_gpout[i].gpio.gp_pintype = GPIO_OUTPUT_PIN;
-      g_gpout[i].gpio.gp_ops     = &gpout_ops;
-      g_gpout[i].id              = i;
-      gpio_pin_register(&g_gpout[i].gpio, pincount);
+        /* Configure the pin that will be used as output */
+        stm32_configgpio(g_gpiooutputs[i]);
 
-      /* Configure the pin that will be used as output */
-
-      stm32_gpiowrite(g_gpiooutputs[i], 0);
-      stm32_configgpio(g_gpiooutputs[i]);
-
-      pincount++;
+        pincount++;
     }
 #endif
 
-#if BOARD_NGPIOINT > 0
-  for (i = 0; i < BOARD_NGPIOINT; i++)
+#if defined(BOARD_NGPIOINT) && BOARD_NGPIOINT > 0
+    for (i = 0; i < BOARD_NGPIOINT; i++)
     {
-      /* Setup and register the GPIO pin */
+        /* Setup and register the GPIO pin */
+        g_gpint[i].stm32gpio.gpio.gp_pintype = GPIO_INTERRUPT_PIN;
+        g_gpint[i].stm32gpio.gpio.gp_ops     = &gpint_ops;
+        g_gpint[i].stm32gpio.id              = i;
+        gpio_pin_register(&g_gpint[i].stm32gpio.gpio, pincount);
 
-      g_gpint[i].stm32gpio.gpio.gp_pintype = GPIO_INTERRUPT_PIN;
-      g_gpint[i].stm32gpio.gpio.gp_ops     = &gpint_ops;
-      g_gpint[i].stm32gpio.id              = i;
-      gpio_pin_register(&g_gpint[i].stm32gpio.gpio, pincount);
+        /* Configure the pin that will be used as interrupt */
+        stm32_configgpio(g_gpiointinputs[i]);
 
-      /* Configure the pin that will be used as interrupt input */
-
-      stm32_configgpio(g_gpiointinputs[i]);
-
-      pincount++;
+        pincount++;
     }
 #endif
 
-  return 0;
+    return OK;
 }
-#endif /* CONFIG_DEV_GPIO && !CONFIG_GPIO_LOWER_HALF */

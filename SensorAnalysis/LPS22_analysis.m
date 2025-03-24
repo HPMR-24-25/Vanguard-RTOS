@@ -33,6 +33,7 @@ legend();
 %% Calculate Sensor Error
 % Root Mean Squared Error (RMS)
 RMS = std(pressure); % [hPa]
+RMS_alt = std(altitude);
 
 %% Gaussian Distribution
 % Calculate Deviation

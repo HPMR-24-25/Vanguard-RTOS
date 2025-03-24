@@ -34,6 +34,17 @@ bool LPS22::init(int i2cBus) {
 
     busWrite(CTRL_REG1, ctrl_reg_1);
 
+    // IF_CTRL
+
+    uint8_t I3C_EN = 0b0;
+    uint8_t SDA_PU_EN = 0b0;
+    uint8_t SDO_PU_EN = 0b0;
+    uint8_t PD_DIS_INT = 0b0;
+    uint8_t I3C_DISABLE = 0b0;
+    uint8_t I2C_DISABLE = 0b0;
+
+    uint8_t if_ctrl_reg = (I3C_EN << 7) | (SDA_PU_EN << 4) | (SDO_PU_EN << 3) | (PD_DIS_INT << 2) | (I3C_DISABLE << 1) | I2C_DISABLE;
+
     return true;
 }
 
@@ -127,7 +138,7 @@ float LPS22::getPressure() {
     return _pressure;
 }
 
-uint16_t LPS22::getTemperature() {
+float LPS22::getTemperature() {
 
     uint8_t dataRead = 0x00;
 
@@ -141,7 +152,7 @@ uint16_t LPS22::getTemperature() {
 
     tData |= dataRead << 8; // LSB
 
-    _temperature = tData / 480;
+    _temperature = tData / 100.0f;
 
     return _temperature;
 }

@@ -41,6 +41,9 @@
 
 /* Configuration ************************************************************/
 
+#define BOARD_NGPIOIN 0
+#define BOARD_NGPIOOUT 1
+
 /* procfs File System */
 
 #ifdef CONFIG_FS_PROCFS
@@ -140,5 +143,4 @@ int stm32_sdio_initialize(void);
  * CS - PA4
 */
 
-#define GPIO_MMCSD_CS    (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_50MHz | \
-                          GPIO_OUTPUT_SET | GPIO_PORTA | GPIO_PIN4)
+#define GPIO_MMCSD_CS    (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_50MHz | GPIO_OUTPUT_SET | GPIO_PORTA | GPIO_PIN4)
